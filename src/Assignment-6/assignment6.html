@@ -1,41 +1,217 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<title></title>
 	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 	<meta http-equiv="Pragma" content="no-cache" />
 	<meta http-equiv="Expires" content="0" />
 	<script src="bundle.js" type="text/javascript"></script>
+	<link rel="stylesheet" href="./assignment6.css">
 </head>
 
 <body>
 	<div id="container">
+		<main>
+			<form class="form">
+				<div class="info">
+					<p><strong>Characters:</strong> <span class="count">00</span></p>
+					<p><strong>Threads:</strong> <span class="threadCount">00</span></p>
+				</div>
+				<textarea class="textarea" placeholder="chirp chirp...  🐦" required="" wrap="soft"
+					onkeyup="textInfo(this);"></textarea>
+				<button type="submit" class="btn">
+					Thread
+					<span class="btn-icon">&#9992;</span>
+				</button>
+			</form>
 
-	<!-- Start your code from here -->
+			<div class="thread-box">
+				<!--
+						  <article class="thread" data-index="1">
+							  <div class="tools">
+								  <span class="index">01</span>
+								  <span class="close" data-index="1">❌</span>
+								  <span class="copy" data-index="1">📋</span>
+							  </div>
+							  
+							  <p class="tweet">
+								  <span class="sl">${i < 9 ? '0' + (i + 1): i + 1} /</span> <br />
+								  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Atque, autem.
+							  </p>
+						  </article>
+						  -->
 
+				<div class="thread">
+					<p>
+						<span class="sl">✨</span> <br />
+						Your threads will be here. 🔥 <br /><br />
+						ℹ️ The character limit for each tweet is 275. <br /><br />
+					</p>
 
-	<!-- End your code -->
-
-	</div>
-
-	<script type="text/javascript">
-	// write your javascript code here
-
-	</script>
+				</div>
 
 </body>
-<script>
-/* DO NOT EDIT THIS CODE- WRITTERN TO PREVENT CSS CACHING */	  
-	// Get HTML head element
-	var head = document.getElementsByTagName('HEAD')[0]; 
-	// Create new link Element
-	var link = document.createElement('link');
-	// set the attributes for link element 
-	link.rel = 'stylesheet'; 
-	link.type = 'text/css';
-	link.href = './assignment6.css?v='+ new Date().getTime(); 
-	// Append link element to HTML head
-	head.appendChild(link); 
-	/* DO NOT EDIT THIS CODE- WRITTERN TO PREVENT CSS CACHING */	  
-</script> 
+
+<script type="text/javascript">
+	// write your javascript code here
+	const dom = (s) => document.querySelector(s); //`${s}`
+	const form = dom(".form");
+	const charCount = dom(".count");
+	const threadCount = dom(".threadCount");
+	const threadBox = dom(".thread-box");
+
+	// tweet character limit
+	let size = 275; // for serial number & stuffs
+	let tweetsArr = [];
+
+	// Info box
+	function textInfo(obj) {
+		let length = obj.value.length;
+
+		// Counts
+		charCount.innerHTML = length;
+		threadCount.innerHTML = Math.ceil(length / size);
+
+		// color
+		length > size
+			? (obj.style.color = "dodgerblue") : (obj.style.color = "seagreen");
+	}
+
+	// Populate UI
+	function displayUI(listParent, arr = []) {
+		listParent.innerHTML = arr
+			.map((el, i) => {
+				return `
+        <article class="thread" data-index="${i}">
+
+        <div class="tools">
+        <span class="index">${i < 9 ? '0' + (i + 1) : i + 1}</span>
+        <span class="close" data-index="${i}">❌</span>
+        <span class="copy" data-index="${i}">📋</span>
+        </div>
+
+        <p class="tweet">
+        ${el}
+        </p>
+
+        </article>
+        `;
+			})
+			.join("");
+	}
+
+	// Shorten the texts for tweets
+	function tweets(str) {
+
+		// split the words based on space
+		let splitOnWhiteSpace = str.split(' ');
+
+		// result arr for storing final result
+		let result = [];
+
+		// vars for later measurement & values
+		let totalLength = 0;
+		let sentence = '';
+
+		// loop through the words
+		for (let i = 0; i < splitOnWhiteSpace.length; i++) {
+
+			// get each word & it's length
+			let curWord = splitOnWhiteSpace[i];
+			let curWordLength = curWord.length;
+
+			// build the sentence
+			sentence += curWord + ' '; // the word & a space
+
+			// +1 for the whiteSpace
+			totalLength += curWordLength + 1;
+
+			// check if the length crosses the limit
+			if (totalLength >= size) {
+
+				// trim the whiteSpace
+				sentence = sentence.trim();
+
+				// check if a word needs to be dropped
+				let lengthDiff = sentence.length - size;
+
+				if (lengthDiff > 0) {
+
+					// find the last location where there is a whiteSpace
+					let lastIndexOfWhiteSpace = sentence.lastIndexOf(' ');
+
+					// only keep the part before that last whiteSpace
+					sentence = sentence.slice(0, lastIndexOfWhiteSpace);
+
+					// decrement the index because we still need to include the dropped word in the next sentence
+					i--;
+				}
+				result.push(sentence);
+
+				// reset everything
+				totalLength = 0;
+				sentence = '';
+			}
+
+			// there might be cases where the last formulated sentence
+			// may not crosses the size limit.
+			// in these cases, on the last iteration
+			// include the sentence so far
+
+			if (i === splitOnWhiteSpace.length - 1 && totalLength <= size && sentence !== '') {
+				result.push(sentence.trim());
+			}
+		}
+
+		return result;
+
+	}
+
+
+	// Thread Maker here
+	function thread(e) {
+		e.preventDefault();
+
+		const thread = dom(".thread");
+		//const txt = dom('.textarea').value;
+		tweetsArr = tweets(dom(".textarea").value);
+
+		// Display on the UI
+		displayUI(threadBox, tweetsArr);
+	}
+
+
+
+	// Events
+	form.addEventListener("submit", thread);
+
+
+	/////////////////////////////////////
+
+	function deleteThread(e) {
+		const [el,
+			index] = [e.target,
+			e.target.dataset.index];
+		let txt = e.target.dataset.para;
+		//console.log(txt);
+
+		// Delete Tweet
+		if (el.classList.contains("close")) {
+			// Remove the selected el
+			tweetsArr.splice(index, 1);
+
+			// update the UI
+			displayUI(threadBox, tweetsArr);
+		}
+
+		// Copy Tweet
+		if (el.classList.contains("copy")) {
+			//....
+		}
+	}
+
+	threadBox.addEventListener("click", deleteThread); 
+</script>
+
 </html>
